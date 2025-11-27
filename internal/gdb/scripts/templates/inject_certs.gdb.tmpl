@@ -1,0 +1,172 @@
+# Certificate Injection Script
+#
+# This script injects a CA certificate into the CC3200 device flash via GDB/OpenOCD.
+# Based on the proven replace-certificate.sh workflow.
+#
+# Parameters:
+#   .OpenOCDHost: OpenOCD hostname (e.g., "localhost")
+#   .OpenOCDPort: OpenOCD port (e.g., 3333)
+#   .CertSize: Size of certificate in bytes
+#   .TargetFile: Target filename on device (e.g., "/cert/129.der")
+#   .Firmware.Functions.*: Function addresses from firmware catalog
+#   .Firmware.Memory.*: Memory addresses from firmware catalog
+
+# Connect to OpenOCD
+target extended-remote {{.OpenOCDHost}}:{{.OpenOCDPort}}
+
+set pagination off
+set confirm off
+
+# Halt the device
+monitor halt
+
+echo [1/9] Halting device...\n
+
+# Define memory locations from firmware catalog
+set $work_buffer = {{printf "0x%x" .Firmware.Memory.WorkBuffer}}
+set $file_handle_ptr = {{printf "0x%x" .Firmware.Memory.FileHandlePtr}}
+set $filename_ptr = {{printf "0x%x" .Firmware.Memory.FilenamePtr}}
+set $token_ptr = {{printf "0x%x" .Firmware.Memory.TokenPtr}}
+set $stack_base = {{printf "0x%x" .Firmware.Memory.StackBase}}
+
+# Certificate parameters
+set $cert_size = {{.CertSize}}
+
+echo [2/9] Setting up filename in memory...\n
+
+# Write filename to memory
+# Target file: {{.TargetFile}}
+{{range $i, $char := .FilenameBytes -}}
+set *((unsigned char*)($filename_ptr + {{$i}})) = {{$char}}
+{{end}}
+set *((unsigned char*)($filename_ptr + {{len .FilenameBytes}})) = 0
+
+echo [3/9] Loading certificate to work buffer...\n
+
+# The certificate data will be loaded from a binary file
+# This is done via GDB's "restore" command which is more efficient than
+# writing byte-by-byte for large certificates
+restore {{.CertTempFile}} binary $work_buffer
+
+echo [4/9] Deleting old certificate (if exists)...\n
+
+# Delete the old certificate file
+# Result codes: 0 = success, -11 = file not found (both are OK)
+set $r0 = $filename_ptr
+set $r1 = 0
+set $pc = {{printf "0x%x" .Firmware.Functions.SlFsDel}}
+set $lr = 0x20000001
+set $sp = $stack_base
+finish
+set $delete_result = $r0
+printf "delete_result: %d\n", $delete_result
+
+echo [4.5/9] Waiting for flash erase to complete...\n
+
+# Add a delay to allow the flash filesystem to complete the erase operation
+# The CC3200 flash filesystem performs asynchronous erase operations
+# We need to wait for the delete to fully complete before creating a new file
+# with the same name. Without this delay, sl_FsOpen may fail with an error.
+shell sleep 5
+
+echo [5/9] Creating new certificate file...\n
+
+# Calculate file creation mode based on TI SDK formula
+# granTable = {256, 1024, 4096, 16384, 65536}
+# For files < 64KB, use 256-byte granularity (granIdx=0)
+# Mode: (Access << 12) | (SizeGran << 8) | (Size << 0) | (Flags << 16)
+set $gran_size = 256
+set $gran_idx = 0
+set $size_blocks = (($cert_size + $gran_size - 1) / $gran_size)
+set $access_mode = 3
+set $flags = 0x5
+set $mode = (($access_mode << 12) | ($gran_idx << 8) | $size_blocks | ($flags << 16))
+printf "mode: 0x%x (size_blocks=%d)\n", $mode, $size_blocks
+
+# Open/create file
+# sl_FsOpen(filename, mode, token, &file_handle)
+set $r0 = $filename_ptr
+set $r1 = $mode
+set $r2 = $token_ptr
+set $r3 = $file_handle_ptr
+set $pc = {{printf "0x%x" .Firmware.Functions.SlFsOpen}}
+set $lr = 0x20000001
+set $sp = $stack_base
+finish
+
+set $open_result = $r0
+set $file_handle = *(int*)$file_handle_ptr
+printf "open_result: %d\n", $open_result
+printf "file_handle: 0x%x\n", $file_handle
+
+# Check if file was created successfully
+if $open_result != 0
+  echo Error: Failed to create certificate file\n
+  printf "sl_FsOpen returned: %d\n", $open_result
+  monitor reset run
+  detach
+  quit
+end
+
+echo [6/9] Writing certificate data...\n
+
+# Write certificate to file
+# sl_FsWrite(handle, offset, data, length)
+set $r0 = $file_handle
+set $r1 = 0
+set $r2 = $work_buffer
+set $r3 = $cert_size
+set $pc = {{printf "0x%x" .Firmware.Functions.SlFsWrite}}
+set $lr = 0x20000001
+set $sp = $stack_base
+finish
+set $bytes_written = $r0
+printf "bytes_written: %d\n", $bytes_written
+
+# Check if write was successful
+if $bytes_written != $cert_size
+  echo Error: Write size mismatch\n
+  printf "Expected: %d, Got: %d\n", $cert_size, $bytes_written
+end
+
+echo [7/9] Closing certificate file...\n
+
+# Close file
+# sl_FsClose(handle, cert_name, signature, sig_len)
+# For certificates, we pass NULL for cert_name and signature
+set $r0 = $file_handle
+set $r1 = 0
+set $r2 = 0
+set $r3 = 0
+set $pc = {{printf "0x%x" .Firmware.Functions.SlFsClose}}
+set $lr = 0x20000001
+set $sp = $stack_base
+finish
+set $close_result = $r0
+printf "close_result: %d\n", $close_result
+
+echo [8/9] Verifying certificate injection...\n
+
+# Summary
+printf "\n=== Certificate Injection Summary ===\n"
+printf "Target file:    {{.TargetFile}}\n"
+printf "Certificate size: %d bytes\n", $cert_size
+printf "Delete result:  %d (0 = deleted, -11 = not found, both OK)\n", $delete_result
+printf "File handle:    0x%x\n", $file_handle
+printf "Bytes written:  %d\n", $bytes_written
+printf "Close result:   %d (0 = success)\n", $close_result
+
+if $bytes_written == $cert_size && $close_result == 0
+  echo \n[SUCCESS] Certificate injection completed successfully!\n
+else
+  echo \n[FAILED] Certificate injection encountered errors.\n
+end
+
+echo [9/9] Resuming device...\n
+
+# Resume device
+monitor reset run
+
+# Detach and quit
+detach
+quit

@@ -1,0 +1,101 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/
+
+# Certificates (don't commit private keys)
+*.key
+*.pem
+*.crt
+*.der
+*.csr
+*.p12
+*.pfx
+!example*.pem
+!example*.key
+certs/
+certificates/
+
+# Configuration files with secrets
+config.yaml
+config.yml
+*-local.yaml
+*-local.yml
+*.secret.*
+
+# Memory dumps and analysis
+*.bin
+*.dump
+*.pcap
+memory/
+dumps/
+smartap-server/analysis/messages/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Python (for mkdocs)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# MkDocs
+site/
+.cache/
+
+# Test coverage
+coverage.txt
+coverage.html
+*.coverprofile
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Build artifacts
+*.tar.gz
+*.zip

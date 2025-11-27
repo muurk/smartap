@@ -1,0 +1,259 @@
+# Firmware Catalog
+#
+# This file maps CC3200 firmware versions to TI SimpleLink API function addresses
+# and function signatures for firmware detection.
+#
+# Each firmware version may have different memory layouts, so function addresses
+# must be determined per version.
+#
+# Signature-Based Detection:
+# Firmware detection works by reading the first 8 bytes (two 32-bit words) at
+# known function addresses and comparing them against stored signatures. This
+# provides reliable version detection even when version information location varies.
+#
+# Signature format: [word1, word2] where each word is a 32-bit little-endian value
+# Example: [0x4606b570, 0x78004818] represents the bytes at that function address
+#
+# How Signature-Based Detection Works:
+# 1. Detection script reads 8 bytes at each function address for all known firmwares
+# 2. Compares actual bytes against expected signatures
+# 3. Calculates confidence score: (matching_signatures / total_signatures) × 100%
+# 4. Early exit optimization: stops checking once 100% match found
+# 5. Operations require 100% confidence to prevent device damage
+#
+# Why This Approach:
+# - Firmware version location varies across versions (can't read from fixed address)
+# - Function instruction bytes are unique and stable per firmware version
+# - Multiple signatures (7 functions) provide high confidence verification
+# - 100% requirement ensures safety (even 1 wrong address could brick device)
+#
+# To add a new firmware version:
+#
+# Step 1: Detect Unknown Firmware
+#   Run: smartap-cfg gdb detect-firmware
+#   If unknown, note the reported version hex value (or "UNKNOWN")
+#
+# Step 2: Dump Device Memory
+#   Run: smartap-cfg gdb dump-memory --address 0x20000000 --size 262144 \
+#          --output firmware-0xXXX.bin
+#   This creates a memory dump for analysis
+#
+# Step 3: Find Function Addresses
+#   Use reverse engineering tools to find the TI SimpleLink API functions:
+#   - sl_FsOpen, sl_FsRead, sl_FsWrite, sl_FsClose, sl_FsDel, sl_FsGetInfo
+#   - uart_log (internal logging function)
+#
+#   Methods:
+#   a) String reference search: Look for "/cert/" string usage
+#   b) Function signature matching: Compare with known firmware disassembly
+#   c) Symbol table: If debug symbols present
+#
+#   See guide: https://github.com/smartap-revival/smartap-revival/wiki/finding-functions-in-memory
+#
+# Step 4: Capture Signatures Using GDB
+#   For each function address found, capture the signature:
+#
+#   Start GDB:
+#     arm-none-eabi-gdb -q
+#
+#   Connect to OpenOCD:
+#     (gdb) target extended-remote localhost:3333
+#     (gdb) monitor reset halt
+#
+#   Read 8 bytes at function address (2 × 32-bit words):
+#     (gdb) x/2xw 0x20015c64
+#     0x20015c64: 0x4606b570 0x78004818
+#
+#   Record both values: [0x4606b570, 0x78004818]
+#
+#   Repeat for all 7 functions to get complete signature set
+#
+# Step 5: Add Firmware Entry to This File
+#   Copy the template below and fill in:
+#   - version: Hex value from detection (e.g., "0x3a0")
+#   - name: TI SimpleLink SDK version if known
+#   - functions: All 7 function addresses
+#   - signatures: All 7 function signatures from Step 4
+#   - memory: Use standard locations (0x20030000 work buffer, etc.)
+#   - verified: Set to false initially
+#
+# Step 6: Test Detection
+#   Run: smartap-cfg gdb detect-firmware
+#   Expected output:
+#     ✓ Firmware detected: 0xXXX
+#     Confidence: 100% (7/7 signatures matched)
+#
+#   If confidence < 100%, signatures are incorrect - recheck Step 4
+#
+# Step 7: Test Certificate Injection
+#   Run: smartap-cfg gdb inject-certs
+#   Expected: Certificate injection completes successfully
+#
+#   If it fails, function addresses may be wrong - reverify Step 3
+#
+# Step 8: Mark as Verified
+#   Once all operations work correctly:
+#   - Set verified: true
+#   - Add notes about testing status
+#   - Commit changes to repository
+#
+# Step 9: Submit Contribution
+#   Create pull request with:
+#   - Updated firmwares.yaml
+#   - Memory dump file (if shareable)
+#   - Device information (model, manufacturing date, photos if possible)
+#   - Testing results (detection, injection, log capture, etc.)
+
+firmwares:
+  # Version 0x355
+  # This is the standard production firmware found on most Smartap devices.
+  # Addresses verified and tested with certificate injection.
+  - version: "0x355"
+    name: "Smartap 0x355"
+    description: "Smartap 0x355"
+    verified: true
+
+    # TI SimpleLink file system API functions
+    functions:
+      # sl_FsOpen: Open/create file in device flash
+      # Signature: _i32 sl_FsOpen(_u8 *pFileName, _u32 AccessModeAndMaxSize, _u32 *pToken)
+      sl_FsOpen: 0x20015c64
+
+      # sl_FsRead: Read from file
+      # Signature: _i32 sl_FsRead(_i32 FileHdl, _u32 Offset, _u8* pData, _u32 Len)
+      sl_FsRead: 0x20014b54
+
+      # sl_FsWrite: Write to file
+      # Signature: _i32 sl_FsWrite(_i32 FileHdl, _u32 Offset, _u8* pData, _u32 Len)
+      sl_FsWrite: 0x20014bf8
+
+      # sl_FsClose: Close file
+      # Signature: _i32 sl_FsClose(_i32 FileHdl, _u8* pCeritificateFileName, _u8* pSignature, _u32 SignatureLen)
+      sl_FsClose: 0x2001555c
+
+      # sl_FsDel: Delete file
+      # Signature: _i32 sl_FsDel(_u8 *pFileName, _u32 Token)
+      sl_FsDel: 0x20016ea8
+
+      # sl_FsGetInfo: Get file information
+      # Signature: _i32 sl_FsGetInfo(_u8 *pFileName, _u32 Token, SlFsFileInfo_t* pFsFileInfo)
+      sl_FsGetInfo: 0x2001590c
+
+      # UART logging function (for log capture)
+      # This is the internal logging function that outputs to UART
+      uart_log: 0x20014f14
+
+      # Function signatures for firmware detection
+      # Format: [word1, word2] - two 32-bit little-endian words (8 bytes total)
+      # These signatures are the first 8 bytes at each function address
+      signatures:
+        sl_FsOpen: [0x4606b570, 0x78004818]
+        sl_FsRead: [0x43f0e92d, 0x48254680]
+        sl_FsWrite: [0x43f0e92d, 0x48244680]
+        sl_FsClose: [0x460db5f0, 0x461c4607]
+        sl_FsDel: [0x4604b510, 0x78004814]
+        sl_FsGetInfo: [0x481d4603, 0x7800b530]
+        uart_log: [0x1c04b510, 0xe003d007]
+
+    # Memory locations for GDB operations
+    memory:
+      # Work buffer: Temporary storage for certificate data before writing
+      # Large enough for certificates up to ~16KB
+      work_buffer: 0x20030000
+
+      # File handle pointer: Stores sl_FsOpen return value
+      file_handle_ptr: 0x20031000
+
+      # Filename pointer: Location to store filename string
+      filename_ptr: 0x20031004
+
+      # Token pointer: Location to store file token
+      token_ptr: 0x20031020
+
+      # Stack base: Safe location for stack-based operations
+      stack_base: 0x20031d00
+
+    # Notes about this firmware version
+    notes: |
+      This is the most common firmware version found on production devices.
+      Addresses have been verified through extensive testing.
+      Certificate injection works reliably with 1-2KB certificates.
+
+      Memory layout:
+      - 0x20000000-0x2002FFFF: RAM (192KB)
+      - 0x20030000-0x20040000: Safe work area (64KB)
+
+      Known issues:
+      - None reported
+
+      Testing status:
+      - Certificate injection: ✓ Tested
+      - Log capture: ✓ Tested
+      - Memory dump: ✓ Tested
+      - File operations: ✓ Tested
+
+# Template for adding new firmware versions
+# (Uncomment and fill in when adding support for a new version)
+#
+# IMPORTANT: Follow Steps 1-9 in the documentation above before adding a new entry
+#
+# - version: "0xXXX"  # From Step 1: firmware detection output
+#   name: "CC3200 ServicePack X.XX.X"  # TI SDK version if known
+#   description: "Description of this firmware variant"
+#   verified: false  # Set to true after Step 8 (all operations tested)
+#
+#   functions:
+#     # From Step 3: Found via reverse engineering
+#     sl_FsOpen: 0xXXXXXXXX    # File open/create function
+#     sl_FsRead: 0xXXXXXXXX    # File read function
+#     sl_FsWrite: 0xXXXXXXXX   # File write function
+#     sl_FsClose: 0xXXXXXXXX   # File close function
+#     sl_FsDel: 0xXXXXXXXX     # File delete function
+#     sl_FsGetInfo: 0xXXXXXXXX # File info function
+#     uart_log: 0xXXXXXXXX     # UART logging function
+#
+#     # From Step 4: Captured using GDB
+#     # For each function address above, run in GDB:
+#     #   (gdb) target extended-remote localhost:3333
+#     #   (gdb) monitor reset halt
+#     #   (gdb) x/2xw 0xXXXXXXXX
+#     #
+#     # Example output:
+#     #   0x20015c64: 0x4606b570 0x78004818
+#     #
+#     # Record both hex values: [0x4606b570, 0x78004818]
+#     signatures:
+#       sl_FsOpen: [0xXXXXXXXX, 0xXXXXXXXX]     # First 8 bytes at sl_FsOpen address
+#       sl_FsRead: [0xXXXXXXXX, 0xXXXXXXXX]     # First 8 bytes at sl_FsRead address
+#       sl_FsWrite: [0xXXXXXXXX, 0xXXXXXXXX]    # First 8 bytes at sl_FsWrite address
+#       sl_FsClose: [0xXXXXXXXX, 0xXXXXXXXX]    # First 8 bytes at sl_FsClose address
+#       sl_FsDel: [0xXXXXXXXX, 0xXXXXXXXX]      # First 8 bytes at sl_FsDel address
+#       sl_FsGetInfo: [0xXXXXXXXX, 0xXXXXXXXX]  # First 8 bytes at sl_FsGetInfo address
+#       uart_log: [0xXXXXXXXX, 0xXXXXXXXX]      # First 8 bytes at uart_log address
+#
+#   memory:
+#     # Standard memory locations (usually don't need to change these)
+#     work_buffer: 0x20030000      # 64KB work area for certificate data
+#     file_handle_ptr: 0x20031000  # Storage for file handle from sl_FsOpen
+#     filename_ptr: 0x20031004     # Storage for filename string
+#     token_ptr: 0x20031020        # Storage for file token
+#     stack_base: 0x20031d00       # Stack pointer for GDB operations
+#
+#   notes: |
+#     Device information:
+#     - Model: [Device model number]
+#     - Manufacturing date: [Date code if visible]
+#     - PCB revision: [If accessible]
+#
+#     Testing status:
+#     - Detection: [ ] Tested (100% confidence)
+#     - Certificate injection: [ ] Tested (successful)
+#     - Log capture: [ ] Tested (if uart_log address known)
+#     - Memory dump: [ ] Tested (optional)
+#     - File operations: [ ] Tested (optional)
+#
+#     Known issues:
+#     - [List any known limitations or issues]
+#
+#     Contributor: [Your name/handle]
+#     Date added: [YYYY-MM-DD]

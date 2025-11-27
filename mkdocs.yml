@@ -1,0 +1,122 @@
+site_name: Smartap
+site_description: Documentation for reviving and controlling Smartap smart shower devices
+site_author: Smartap Community
+repo_url: https://github.com/muurk/smartap
+repo_name: smartap
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - scheme: default
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+
+plugins:
+  - search
+  - tags
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - What This Tool Does: getting-started/overview.md
+    - Download: getting-started/download.md
+    - WiFi Setup: getting-started/wifi-setup.md
+    - Configuring Outlets: getting-started/configuring.md
+    - Troubleshooting: getting-started/troubleshooting.md
+  - Device Jailbreak:
+    - Overview: jailbreak/overview.md
+    - Prerequisites: jailbreak/prerequisites.md
+    - Hardware Setup: jailbreak/hardware-setup.md
+    - Using smartap-jtag: jailbreak/using-smartap-jtag.md
+    - Unrecognized Firmware: jailbreak/unrecognized-firmware.md
+    - Troubleshooting: jailbreak/troubleshooting.md
+  - How It Works:
+    - Overview: how-it-works/overview.md
+    - Firmware Detection: how-it-works/firmware-detection.md
+    - Certificate Injection: how-it-works/certificate-injection.md
+    - Adding New Firmware: how-it-works/adding-firmware.md
+  - Running the Server:
+    - Overview: server/overview.md
+    - Quick Start: server/quick-start.md
+    - Custom Certificates: server/custom-certificates.md
+    - Current Limitations: server/limitations.md
+  - Downloads: downloads.md
+  - Technical Reference:
+    - Architecture: technical/architecture.md
+    - Research Background: technical/research-background.md
+    - Protocol Documentation: technical/protocol.md
+    - Certificate Details: technical/certificate-details.md
+    - Hardware Access: technical/hardware-access.md
+    - Development Setup: technical/development.md
+    - Releasing: technical/releasing.md
+  - Contributing:
+    - How to Contribute: contributing/overview.md
+    - Help Without Hardware: contributing/help-without-hardware.md
+    - Firmware Analysis: contributing/firmware-analysis.md
+  - About:
+    - Project History: about/project-history.md
+    - FAQ: about/faq.md
+    - Community: about/community.md
+    - License: about/license.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/muurk/smartap
+  analytics:
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/thumb-up-outline
+          name: This page was helpful
+          data: 1
+          note: Thanks for your feedback!
+        - icon: material/thumb-down-outline
+          name: This page could be improved
+          data: 0
+          note: Thanks for your feedback!
+
+copyright: Copyright Smartap Community
