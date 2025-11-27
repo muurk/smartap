@@ -16,7 +16,7 @@ func TestRollbackManager_SaveSnapshot(t *testing.T) {
 		if r.Method == http.MethodGet {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true,"swVer":"0x355","mac":"C4:BE:84:74:86:37"}`)
+			_, _ = fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true,"swVer":"0x355","mac":"C4:BE:84:74:86:37"}`)
 		}
 	}))
 	defer server.Close()
@@ -56,7 +56,7 @@ func TestRollbackManager_SnapshotLimit(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
+		_, _ = fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
 	}))
 	defer server.Close()
 
@@ -99,7 +99,7 @@ func TestRollbackManager_GetSnapshots(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
+		_, _ = fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
 	}))
 	defer server.Close()
 
@@ -152,7 +152,7 @@ func TestRollbackManager_ClearSnapshots(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
+		_, _ = fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
 	}))
 	defer server.Close()
 
@@ -167,7 +167,7 @@ func TestRollbackManager_ClearSnapshots(t *testing.T) {
 
 	// Save some snapshots
 	for i := 0; i < 3; i++ {
-		rm.SaveSnapshot(fmt.Sprintf("Snapshot %d", i))
+		_ = rm.SaveSnapshot(fmt.Sprintf("Snapshot %d", i))
 	}
 
 	if len(rm.GetSnapshots()) != 3 {
@@ -197,10 +197,10 @@ func TestRollbackManager_RollbackToSnapshot(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 			if requestCount == 1 {
 				// Original config
-				fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
+				_, _ = fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
 			} else {
 				// After rollback (same as original)
-				fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
+				_, _ = fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
 			}
 		} else if r.Method == http.MethodPost {
 			// Accept POST updates
@@ -248,7 +248,7 @@ func TestRollbackManager_RollbackToLatest(t *testing.T) {
 		if r.Method == http.MethodGet {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
+			_, _ = fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
 		} else if r.Method == http.MethodPost {
 			w.WriteHeader(http.StatusNoContent)
 		}
@@ -275,7 +275,7 @@ func TestRollbackManager_RollbackToLatest(t *testing.T) {
 	}
 
 	// Save snapshot
-	rm.SaveSnapshot("Snapshot 1")
+	_ = rm.SaveSnapshot("Snapshot 1")
 
 	// Rollback to latest
 	result = rm.RollbackToLatest()
@@ -311,7 +311,7 @@ func TestRollbackManager_SafeUpdate_Success(t *testing.T) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			// Return updated config
-			fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":7,"outlet2":3,"outlet3":1,"k3Outlet":false}`)
+			_, _ = fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":7,"outlet2":3,"outlet3":1,"k3Outlet":false}`)
 		} else if r.Method == http.MethodPost {
 			w.WriteHeader(http.StatusNoContent)
 		}
@@ -362,13 +362,13 @@ func TestRollbackManager_SafeUpdate_FailureWithRollback(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 			if getCount == 1 {
 				// Initial snapshot
-				fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
+				_, _ = fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
 			} else if getCount == 2 {
 				// After failed update (config didn't change - verification will fail)
-				fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
+				_, _ = fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
 			} else {
 				// After rollback
-				fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
+				_, _ = fmt.Fprint(w, `{"serial":"315260240","dns":"lb.smartap-tech.com","port":80,"outlet1":1,"outlet2":2,"outlet3":4,"k3Outlet":true}`)
 			}
 		} else if r.Method == http.MethodPost {
 			w.WriteHeader(http.StatusNoContent)

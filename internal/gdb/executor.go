@@ -106,7 +106,7 @@ func (e *Executor) Execute(ctx context.Context, script scripts.Script) (*scripts
 	if err != nil {
 		return nil, fmt.Errorf("failed to write script file: %w", err)
 	}
-	defer os.Remove(scriptFile) // Clean up temp file
+	defer func() { _ = os.Remove(scriptFile) }() // Clean up temp file
 
 	e.logger.Debug("wrote GDB script to temporary file",
 		zap.String("script", script.Name()),
@@ -194,11 +194,11 @@ func (e *Executor) writeScriptFile(name, content string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Write content
 	if _, err := file.WriteString(content); err != nil {
-		os.Remove(file.Name())
+		_ = os.Remove(file.Name())
 		return "", fmt.Errorf("failed to write script content: %w", err)
 	}
 
@@ -238,17 +238,18 @@ func (e *Executor) executeGDB(ctx context.Context, scriptFile string, streaming 
 
 	if streaming {
 		// Streaming mode: Use pipes for real-time unbuffered output
-		stdoutPipe, err := cmd.StdoutPipe()
+		var stdoutPipe, stderrPipe io.ReadCloser
+		stdoutPipe, err = cmd.StdoutPipe()
 		if err != nil {
 			return "", "", -1, fmt.Errorf("failed to create stdout pipe: %w", err)
 		}
-		stderrPipe, err := cmd.StderrPipe()
+		stderrPipe, err = cmd.StderrPipe()
 		if err != nil {
 			return "", "", -1, fmt.Errorf("failed to create stderr pipe: %w", err)
 		}
 
 		// Start the command
-		if err := cmd.Start(); err != nil {
+		if err = cmd.Start(); err != nil {
 			return "", "", -1, fmt.Errorf("failed to start GDB: %w", err)
 		}
 
@@ -258,12 +259,12 @@ func (e *Executor) executeGDB(ctx context.Context, scriptFile string, streaming 
 
 		go func() {
 			defer wg.Done()
-			io.Copy(io.MultiWriter(&stdoutBuf, os.Stdout), stdoutPipe)
+			_, _ = io.Copy(io.MultiWriter(&stdoutBuf, os.Stdout), stdoutPipe)
 		}()
 
 		go func() {
 			defer wg.Done()
-			io.Copy(io.MultiWriter(&stderrBuf, os.Stderr), stderrPipe)
+			_, _ = io.Copy(io.MultiWriter(&stderrBuf, os.Stderr), stderrPipe)
 		}()
 
 		// Wait for command to finish and pipes to be fully read

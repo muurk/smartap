@@ -541,7 +541,7 @@ func TestFirmware_Signatures_BackwardCompatibility(t *testing.T) {
 	// (it should be an empty map if not specified in YAML)
 	for _, fw := range db.Firmwares {
 		// Signatures can be nil or empty map, both are valid
-		if fw.Functions.Signatures != nil && len(fw.Functions.Signatures) > 0 {
+		if len(fw.Functions.Signatures) > 0 {
 			// If signatures exist, validate their format
 			for sigName, sig := range fw.Functions.Signatures {
 				if len(sig) != 2 {

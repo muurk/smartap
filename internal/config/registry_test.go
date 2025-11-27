@@ -204,7 +204,7 @@ func TestRegistrySaveAndLoad(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Override config directory for testing
 	testConfigPath := filepath.Join(tmpDir, "config.yaml")
@@ -357,7 +357,7 @@ func loadRegistryFromFile(path string) (*Registry, error) {
 
 func BenchmarkGetConfigDir(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		GetConfigDir()
+		_, _ = GetConfigDir()
 	}
 }
 

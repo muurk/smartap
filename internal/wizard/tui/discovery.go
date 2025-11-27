@@ -209,7 +209,7 @@ func (d deviceDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 		cardStyle = cardStyle.BorderForeground(HighlightColor)
 	}
 
-	fmt.Fprint(w, cardStyle.Render(content.String()))
+	_, _ = fmt.Fprint(w, cardStyle.Render(content.String()))
 }
 
 // DiscoveryModel represents the device discovery screen state
@@ -587,14 +587,6 @@ func (m DiscoveryModel) renderDeviceResults() string {
 	}
 
 	return b.String()
-}
-
-// renderScanning renders the scanning progress indicator (legacy - keeping for compatibility)
-func (m DiscoveryModel) renderScanning() string {
-	elapsed := time.Since(m.ScanStartTime).Round(time.Second)
-	status := fmt.Sprintf("%s Scanning network for Smartap devices... (%s)", m.Spinner.View(), elapsed)
-
-	return SpinnerStyle.Render(status) + "\n\n"
 }
 
 // min returns the minimum of two integers

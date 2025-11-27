@@ -98,24 +98,24 @@ func (p *Printer) Width() int {
 
 // Print writes content to the output
 func (p *Printer) Print(content string) {
-	fmt.Fprint(p.out, content)
+	_, _ = fmt.Fprint(p.out, content)
 }
 
 // Println writes content with a newline
 func (p *Printer) Println(content string) {
-	fmt.Fprintln(p.out, content)
+	_, _ = fmt.Fprintln(p.out, content)
 }
 
 // PrintLines writes multiple lines
 func (p *Printer) PrintLines(lines ...string) {
 	for _, line := range lines {
-		fmt.Fprintln(p.out, line)
+		_, _ = fmt.Fprintln(p.out, line)
 	}
 }
 
 // Newline prints an empty line
 func (p *Printer) Newline() {
-	fmt.Fprintln(p.out)
+	_, _ = fmt.Fprintln(p.out)
 }
 
 // PrintHeader prints a command header box

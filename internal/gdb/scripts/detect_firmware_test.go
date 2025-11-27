@@ -366,12 +366,6 @@ func TestDetectFirmwareScript_Parse_ConfidenceCalculation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			output := "DETECTED_VERSION=0x355\n"
-			output += "CONFIDENCE=" + strings.Repeat("0", 3-len(strings.TrimLeft(strings.TrimRight(string(rune(tc.confidence)), "0"), "0"))) + string(rune(tc.confidence)) + "\n"
-			output += "MATCHES=" + string(rune(tc.matches+'0')) + "\n"
-			output += "STATUS=OK\n"
-
-			// Better approach: use fmt.Sprintf for integer conversion
-			output = "DETECTED_VERSION=0x355\n"
 			output += fmt.Sprintf("CONFIDENCE=%d\n", tc.confidence)
 			output += fmt.Sprintf("MATCHES=%d\n", tc.matches)
 			output += "STATUS=OK\n"

@@ -23,10 +23,10 @@ const (
 	pongWait = 60 * time.Second
 
 	// Send pings to peer with this period (must be less than pongWait)
-	pingPeriod = (pongWait * 9) / 10
+	pingPeriod = (pongWait * 9) / 10 //nolint:unused // Reserved for future ping/pong heartbeat
 
 	// Maximum message size allowed from peer
-	maxMessageSize = 8192 // 8KB should be enough for IoT messages
+	maxMessageSize = 8192 //nolint:unused // Reserved for future message size validation
 )
 
 // HandleWebSocketConnection manages a WebSocket connection after the HTTP 101 upgrade
@@ -37,7 +37,7 @@ func HandleWebSocketConnection(conn net.Conn, remoteAddr string, analysisDir str
 	logging.LogConnection(remoteAddr, "websocket_upgraded")
 
 	defer func() {
-		conn.Close()
+		_ = conn.Close()
 		logging.LogConnection(remoteAddr, "websocket_closed")
 	}()
 
@@ -46,7 +46,13 @@ func HandleWebSocketConnection(conn net.Conn, remoteAddr string, analysisDir str
 
 	// Main message receive loop
 	for {
-		conn.SetReadDeadline(time.Now().Add(pongWait))
+		if err := conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+			logging.Info("Failed to set read deadline, connection may be closed",
+				zap.String("remote_addr", remoteAddr),
+				zap.Error(err),
+			)
+			return err
+		}
 
 		// Read and parse WebSocket frame
 		frame, err := protocol.ReadFrame(conn)
@@ -182,7 +188,7 @@ func SaveMessageToAnalysis(remoteAddr string, messageNum int, frame *protocol.Fr
 		)
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	// Write JSON line
 	data, err := json.Marshal(analysis)
@@ -255,7 +261,13 @@ func SendMessage(conn net.Conn, remoteAddr string, message []byte) error {
 	frame := buildWebSocketFrame(message)
 
 	// Set write deadline
-	conn.SetWriteDeadline(time.Now().Add(writeWait))
+	if err := conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+		logging.Error("Failed to set write deadline",
+			zap.String("remote_addr", remoteAddr),
+			zap.Error(err),
+		)
+		return err
+	}
 
 	// Send the frame
 	n, err := conn.Write(frame)

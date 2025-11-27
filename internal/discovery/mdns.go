@@ -144,7 +144,7 @@ func (s *Scanner) parseServiceEntry(entry *zeroconf.ServiceEntry) *Device {
 	}
 
 	matches := serialPattern.FindStringSubmatch(hostname)
-	if matches == nil || len(matches) < 2 {
+	if len(matches) < 2 {
 		return nil
 	}
 

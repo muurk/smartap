@@ -123,7 +123,7 @@ func checkOpenOCDConnection(ctx context.Context, host string, port int) Prerequi
 			"Ensure OpenOCD is running: openocd -f <your-config.cfg>", address)
 		return check
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	check.Available = true
 	check.Message = fmt.Sprintf("Connected successfully to %s", address)
@@ -180,7 +180,7 @@ func ValidateOpenOCDConnection(ctx context.Context, host string, port int) error
 			Err:  err,
 		}
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	return nil
 }

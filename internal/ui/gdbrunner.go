@@ -76,8 +76,8 @@ func (r *GDBRunner) Run(ctx context.Context, operation GDBOperation) error {
 	r.startTime = time.Now()
 
 	// Print header
-	fmt.Fprintln(r.output, r.header.Render())
-	fmt.Fprintln(r.output)
+	_, _ = fmt.Fprintln(r.output, r.header.Render())
+	_, _ = fmt.Fprintln(r.output)
 
 	// Create step callback
 	stepCallback := r.createStepCallback()
@@ -102,8 +102,8 @@ func (r *GDBRunner) RunWithResult(ctx context.Context, operation func(onStep Ste
 	r.startTime = time.Now()
 
 	// Print header
-	fmt.Fprintln(r.output, r.header.Render())
-	fmt.Fprintln(r.output)
+	_, _ = fmt.Fprintln(r.output, r.header.Render())
+	_, _ = fmt.Fprintln(r.output)
 
 	// Create step callback
 	stepCallback := r.createStepCallback()
@@ -146,18 +146,18 @@ func (r *GDBRunner) createStepCallback() StepCallback {
 		if status == StepComplete || status == StepFailed || status == StepSkipped {
 			// Print completed step
 			step := r.progress.Steps[stepNumber-1]
-			fmt.Fprintln(r.output, r.progress.renderStepLine(step))
+			_, _ = fmt.Fprintln(r.output, r.progress.renderStepLine(step))
 		} else if status == StepRunning {
 			// Print running step (will be overwritten when complete)
 			step := r.progress.Steps[stepNumber-1]
-			fmt.Fprint(r.output, r.progress.renderStepLine(step)+"\r")
+			_, _ = fmt.Fprint(r.output, r.progress.renderStepLine(step)+"\r")
 		}
 	}
 }
 
 // printSuccess prints a success result
 func (r *GDBRunner) printSuccess(duration time.Duration) {
-	fmt.Fprintln(r.output)
+	_, _ = fmt.Fprintln(r.output)
 
 	// Default success details
 	details := map[string]string{
@@ -166,20 +166,20 @@ func (r *GDBRunner) printSuccess(duration time.Duration) {
 
 	result := NewSuccessResult(r.config.Title+" complete", details)
 	result.SetWidth(r.width)
-	fmt.Fprintln(r.output, result.Render())
+	_, _ = fmt.Fprintln(r.output, result.Render())
 
 	// Show GDB output in verbose mode
 	if r.config.Verbose && r.gdbOutput != "" {
-		fmt.Fprintln(r.output)
+		_, _ = fmt.Fprintln(r.output)
 		gdb := NewGDBOutput(r.gdbOutput)
 		gdb.SetWidth(r.width)
-		fmt.Fprintln(r.output, gdb.Render())
+		_, _ = fmt.Fprintln(r.output, gdb.Render())
 	}
 }
 
 // printSuccessWithDetails prints a success result with custom details
 func (r *GDBRunner) printSuccessWithDetails(details map[string]string, duration time.Duration) {
-	fmt.Fprintln(r.output)
+	_, _ = fmt.Fprintln(r.output)
 
 	// Add duration to details
 	if details == nil {
@@ -189,20 +189,20 @@ func (r *GDBRunner) printSuccessWithDetails(details map[string]string, duration 
 
 	result := NewSuccessResult(r.config.Title+" complete", details)
 	result.SetWidth(r.width)
-	fmt.Fprintln(r.output, result.Render())
+	_, _ = fmt.Fprintln(r.output, result.Render())
 
 	// Show GDB output in verbose mode
 	if r.config.Verbose && r.gdbOutput != "" {
-		fmt.Fprintln(r.output)
+		_, _ = fmt.Fprintln(r.output)
 		gdb := NewGDBOutput(r.gdbOutput)
 		gdb.SetWidth(r.width)
-		fmt.Fprintln(r.output, gdb.Render())
+		_, _ = fmt.Fprintln(r.output, gdb.Render())
 	}
 }
 
 // printFailure prints a failure result with troubleshooting
 func (r *GDBRunner) printFailure(err error, duration time.Duration) {
-	fmt.Fprintln(r.output)
+	_, _ = fmt.Fprintln(r.output)
 
 	// Default troubleshooting tips
 	troubleshooting := []string{
@@ -214,14 +214,14 @@ func (r *GDBRunner) printFailure(err error, duration time.Duration) {
 
 	result := NewFailureResult(r.config.Title+" failed", err, troubleshooting)
 	result.SetWidth(r.width)
-	fmt.Fprintln(r.output, result.Render())
+	_, _ = fmt.Fprintln(r.output, result.Render())
 
 	// Always show GDB output on failure in verbose mode
 	if r.config.Verbose && r.gdbOutput != "" {
-		fmt.Fprintln(r.output)
+		_, _ = fmt.Fprintln(r.output)
 		gdb := NewGDBOutput(r.gdbOutput)
 		gdb.SetWidth(r.width)
-		fmt.Fprintln(r.output, gdb.Render())
+		_, _ = fmt.Fprintln(r.output, gdb.Render())
 	}
 }
 

@@ -510,7 +510,7 @@ func BenchmarkBuildProtocolFrame(b *testing.B) {
 	payload := make([]byte, 19)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		BuildProtocolFrame(uint32(i), payload)
+		_, _ = BuildProtocolFrame(uint32(i), payload)
 	}
 }
 
@@ -518,7 +518,7 @@ func BenchmarkBuildCommandMessage(b *testing.B) {
 	data := []byte{0x01, 0x02, 0x03}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		BuildCommandMessage(uint32(i), 0x1234, data)
+		_, _ = BuildCommandMessage(uint32(i), 0x1234, data)
 	}
 }
 

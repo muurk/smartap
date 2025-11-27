@@ -1,0 +1,11 @@
+version: "2"
+
+linters:
+  settings:
+    staticcheck:
+      checks:
+        - "all"
+        - "-QF1003"  # Don't enforce tagged switch style - if/else chains are fine
+        - "-ST1000"  # Don't require package comments
+        - "-ST1003"  # Don't enforce strict naming conventions (e.g., ASCII vs Ascii)
+        - "-ST1020"  # Don't enforce comment format on exported functions

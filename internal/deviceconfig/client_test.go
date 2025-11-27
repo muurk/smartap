@@ -88,7 +88,7 @@ func TestPing_Success(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockDeviceResponse))
+		_, _ = w.Write([]byte(mockDeviceResponse))
 	}))
 	defer server.Close()
 
@@ -149,7 +149,7 @@ func TestGetConfiguration_Success(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockDeviceResponse))
+		_, _ = w.Write([]byte(mockDeviceResponse))
 	}))
 	defer server.Close()
 
@@ -186,7 +186,7 @@ func TestGetConfiguration_MalformedJSON(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockMalformedResponse))
+		_, _ = w.Write([]byte(mockMalformedResponse))
 	}))
 	defer server.Close()
 
@@ -229,7 +229,7 @@ func TestGetConfiguration_InvalidJSON(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("not valid JSON at all"))
+		_, _ = w.Write([]byte("not valid JSON at all"))
 	}))
 	defer server.Close()
 
@@ -455,7 +455,7 @@ func TestVerifyConfiguration_Success(t *testing.T) {
 		// Return config with expected values
 		response := `{"ssidList":[],"lowPowerMode":false,"serial":"315260240","dns":"test.server.com","port":443,"outlet1":3,"outlet2":5,"outlet3":7,"k3Outlet":true,"swVer":"0x355","wnpVer":"2.:.0.000","mac":"C4:BE:84:74:86:37"}`
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	}))
 	defer server.Close()
 
@@ -491,7 +491,7 @@ func TestVerifyConfiguration_Mismatch(t *testing.T) {
 
 		// Return config with different values
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockDeviceResponse))
+		_, _ = w.Write([]byte(mockDeviceResponse))
 	}))
 	defer server.Close()
 
@@ -544,7 +544,7 @@ func TestGetFormData(t *testing.T) {
 func BenchmarkGetConfiguration(b *testing.B) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockDeviceResponse))
+		_, _ = w.Write([]byte(mockDeviceResponse))
 	}))
 	defer server.Close()
 
@@ -552,7 +552,7 @@ func BenchmarkGetConfiguration(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		client.GetConfiguration()
+		_, _ = client.GetConfiguration()
 	}
 }
 
@@ -572,7 +572,7 @@ func BenchmarkUpdateConfiguration(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		client.UpdateConfiguration(update)
+		_ = client.UpdateConfiguration(update)
 	}
 }
 
@@ -589,7 +589,7 @@ func TestCaching_Enabled(t *testing.T) {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockDeviceResponse))
+		_, _ = w.Write([]byte(mockDeviceResponse))
 	}))
 	defer server.Close()
 
@@ -633,7 +633,7 @@ func TestCaching_Disabled(t *testing.T) {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockDeviceResponse))
+		_, _ = w.Write([]byte(mockDeviceResponse))
 	}))
 	defer server.Close()
 
@@ -667,7 +667,7 @@ func TestCaching_Expiration(t *testing.T) {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockDeviceResponse))
+		_, _ = w.Write([]byte(mockDeviceResponse))
 	}))
 	defer server.Close()
 
@@ -709,7 +709,7 @@ func TestInvalidateCache(t *testing.T) {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockDeviceResponse))
+		_, _ = w.Write([]byte(mockDeviceResponse))
 	}))
 	defer server.Close()
 
@@ -744,7 +744,7 @@ func TestGetCachedConfiguration(t *testing.T) {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockDeviceResponse))
+		_, _ = w.Write([]byte(mockDeviceResponse))
 	}))
 	defer server.Close()
 
@@ -766,7 +766,7 @@ func TestGetCachedConfiguration(t *testing.T) {
 	// Should have cached value now
 	cached = client.GetCachedConfiguration()
 	if cached == nil {
-		t.Error("Expected cached config")
+		t.Fatal("Expected cached config") // Use Fatal to stop execution
 	}
 
 	if cached.Serial != "315260240" {
@@ -785,7 +785,7 @@ func TestRefreshConfiguration(t *testing.T) {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockDeviceResponse))
+		_, _ = w.Write([]byte(mockDeviceResponse))
 	}))
 	defer server.Close()
 
@@ -832,7 +832,7 @@ func TestCacheInvalidatedAfterUpdate(t *testing.T) {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockDeviceResponse))
+		_, _ = w.Write([]byte(mockDeviceResponse))
 	}))
 	defer server.Close()
 
@@ -872,7 +872,7 @@ func TestSetDiverterButtons(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Capture form data
 		if r.Method == http.MethodPost {
-			r.ParseForm()
+			_ = r.ParseForm()
 			capturedForm = r.Form
 			w.WriteHeader(http.StatusNoContent)
 		}
@@ -919,7 +919,7 @@ func TestSetThirdKnobMode(t *testing.T) {
 
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.Method == http.MethodPost {
-					r.ParseForm()
+					_ = r.ParseForm()
 					capturedForm = r.Form
 					w.WriteHeader(http.StatusNoContent)
 				}
@@ -946,7 +946,7 @@ func TestSetSequentialOutlets(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			r.ParseForm()
+			_ = r.ParseForm()
 			capturedForm = r.Form
 			w.WriteHeader(http.StatusNoContent)
 		}
@@ -982,7 +982,7 @@ func TestSetAllOutletsOn(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			r.ParseForm()
+			_ = r.ParseForm()
 			capturedForm = r.Form
 			w.WriteHeader(http.StatusNoContent)
 		}

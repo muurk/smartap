@@ -976,19 +976,6 @@ func (m DashboardModel) renderField(label string, value string, fieldIdx int, ha
 	return line
 }
 
-// isFieldBeingEdited returns true if the given field index is currently being edited inline
-func (m DashboardModel) isFieldBeingEdited(fieldIdx int) bool {
-	switch m.EditingSection {
-	case SectionOutlets:
-		return fieldIdx >= 0 && fieldIdx <= 3 && m.EditingField == fieldIdx
-	case SectionWiFi:
-		return fieldIdx == 5 && m.EditingField == 0
-	case SectionServer:
-		return (fieldIdx == 7 && m.EditingField == 0) || (fieldIdx == 8 && m.EditingField == 1)
-	}
-	return false
-}
-
 // isFieldChanged returns true if the field's pending value differs from the original
 func (m DashboardModel) isFieldChanged(fieldIdx int) bool {
 	switch fieldIdx {
@@ -1008,47 +995,6 @@ func (m DashboardModel) isFieldChanged(fieldIdx int) bool {
 		return m.PendingConfig.Port != m.CurrentConfig.Port
 	}
 	return false
-}
-
-// renderInlineOptions renders dropdown options when a field is being edited
-// Uses simple indented list, no box - for use in simplified section renderers
-// Parameters:
-//   - options: list of option strings
-//   - selectedIdx: which option is currently selected (cursor position)
-//   - currentValue: index of the currently saved value (to show filled radio)
-func (m DashboardModel) renderInlineOptions(options []string, selectedIdx int, currentValue int) string {
-	var lines []string
-
-	for i, opt := range options {
-		// Cursor indicator
-		cursor := "  "
-		if i == selectedIdx {
-			cursor = "← "
-		}
-
-		// Radio button indicator (filled if current value, empty otherwise)
-		indicator := "( )"
-		if i == currentValue {
-			indicator = "(•)"
-		}
-
-		// Style the option
-		style := lipgloss.NewStyle()
-		if i == selectedIdx {
-			style = style.Foreground(HighlightColor)
-		}
-
-		line := style.Render(fmt.Sprintf("        %s %s %s", indicator, opt, cursor))
-		lines = append(lines, line)
-	}
-
-	// Add help line
-	helpLine := lipgloss.NewStyle().
-		Foreground(SubtleColor).
-		Render("        ↑/↓ select • Enter confirm • Esc cancel")
-	lines = append(lines, helpLine)
-
-	return lipgloss.JoinVertical(lipgloss.Left, lines...)
 }
 
 // renderSection renders a configuration section with title, fields, and apply button
@@ -1220,42 +1166,6 @@ func (m DashboardModel) renderServerFieldInline(fieldType int) string {
 	return lipgloss.JoinVertical(lipgloss.Left, lines...)
 }
 
-// renderNetworkField renders a single network field (WiFi, DNS, Port) as a simple line
-// NOTE: Inline editing is handled by the section renderer inserting the inline editor
-// Navigation order: WiFi=5, DNS=7, Port=8
-func (m DashboardModel) renderNetworkField(fieldIdx int) string {
-	label := m.getFieldLabel(fieldIdx)
-
-	var value string
-	hasDropdown := false
-
-	switch fieldIdx {
-	case 5: // WiFi SSID
-		if m.PendingConfig.WiFiSSID != "" {
-			value = m.PendingConfig.WiFiSSID
-		} else {
-			value = "Not configured"
-		}
-		hasDropdown = true
-
-	case 7: // DNS
-		value = m.PendingConfig.DNS
-
-	case 8: // Port
-		value = fmt.Sprintf("%d", m.PendingConfig.Port)
-
-	default:
-		value = "Unknown field"
-	}
-
-	// Add change indicator if modified
-	if m.isFieldChanged(fieldIdx) {
-		value += " ⚠"
-	}
-
-	return m.renderField(label, value, fieldIdx, hasDropdown)
-}
-
 // renderOutletsSection renders the Outlets configuration section
 // Simple flat layout using renderSection helper
 func (m DashboardModel) renderOutletsSection() string {
@@ -1405,49 +1315,6 @@ func (m DashboardModel) renderApplyButton(label string, fieldIdx int, hasChanges
 		Align(lipgloss.Center).
 		Width(60).
 		Render(button)
-}
-
-// renderCenteredModal renders a lipgloss-styled modal box centered horizontally
-// Uses lipgloss.Place() for framework-compliant centering instead of strings.Builder
-func renderCenteredModal(content string, title string, terminalWidth int, maxModalWidth int) string {
-	// Calculate modal width (max 80 chars, leave room for terminal margins)
-	modalWidth := maxModalWidth
-	if terminalWidth > 0 && terminalWidth-8 < modalWidth {
-		modalWidth = terminalWidth - 8
-	}
-	if modalWidth < 40 {
-		modalWidth = 40 // Minimum modal width
-	}
-
-	// Modal box style
-	modalStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(PrimaryColor).
-		Width(modalWidth).
-		Padding(1, 2)
-
-	// Title style
-	titleStyle := lipgloss.NewStyle().
-		Foreground(PrimaryColor).
-		Bold(true)
-
-	// Build modal content with title using lipgloss.JoinVertical
-	var fullContent string
-	if title != "" {
-		fullContent = lipgloss.JoinVertical(lipgloss.Left,
-			titleStyle.Render(title),
-			"",
-			content,
-		)
-	} else {
-		fullContent = content
-	}
-
-	// Render modal
-	renderedModal := modalStyle.Render(fullContent)
-
-	// Center the modal horizontally using lipgloss.Place
-	return lipgloss.Place(terminalWidth, 0, lipgloss.Center, lipgloss.Top, renderedModal)
 }
 
 // renderWiFiWarningModal renders the WiFi change warning modal
@@ -1731,7 +1598,7 @@ func (m DashboardModel) renderProgressModalContent() string {
 	// Calculate progress (0-100%)
 	// Simple two-stage progress: 0-50% = sending, 50-100% = verifying
 	elapsed := time.Since(m.ApplyStartTime)
-	elapsedSec := elapsed.Round(100 * time.Millisecond)
+	elapsedRounded := elapsed.Round(100 * time.Millisecond)
 
 	// Estimate progress based on elapsed time (10 second total estimated)
 	baseProgress := min(int(elapsed.Seconds()*10), 50) // First 5 seconds = 0-50%
@@ -1767,7 +1634,7 @@ func (m DashboardModel) renderProgressModalContent() string {
 
 	// Elapsed time
 	timeStyle := lipgloss.NewStyle().Foreground(SubtleColor)
-	elapsedText := timeStyle.Render(fmt.Sprintf("Elapsed: %s", elapsedSec))
+	elapsedText := timeStyle.Render(fmt.Sprintf("Elapsed: %s", elapsedRounded))
 
 	// Compose all content using lipgloss.JoinVertical
 	content := lipgloss.JoinVertical(lipgloss.Left,
@@ -2066,14 +1933,6 @@ func (m DashboardModel) renderHelpModalContent() string {
 		Width(70) // Fixed comfortable width - centering handled by RenderModal
 
 	return modalStyle.Render(content)
-}
-
-// isShowingAnyModal returns true if any modal is currently displayed
-// Only checks for result modals and WiFi warning (config editing is now inline)
-func (m DashboardModel) isShowingAnyModal() bool {
-	return m.ShowingWiFiWarning || m.ShowingHelp ||
-		m.ShowingProgress || m.ShowingSuccess ||
-		m.ShowingFailure
 }
 
 // getFirstSSID returns the first SSID from the list, or empty string if none

@@ -159,7 +159,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 	s.mu.Unlock()
 
 	defer func() {
-		conn.Close()
+		_ = conn.Close()
 		s.mu.Lock()
 		delete(s.activeConns, remoteAddr)
 		s.mu.Unlock()
@@ -244,7 +244,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	s.mu.Lock()
 	for addr, conn := range s.activeConns {
 		logging.Info("Closing active connection", zap.String("remote_addr", addr))
-		conn.Close()
+		_ = conn.Close()
 	}
 	s.mu.Unlock()
 

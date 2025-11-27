@@ -21,7 +21,7 @@ func newVerifyTestServer(config *DeviceConfig, postHandler func(w http.ResponseW
 
 		if r.Method == "GET" {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(config)
+			_ = json.NewEncoder(w).Encode(config)
 		} else if r.Method == "POST" {
 			if postHandler != nil {
 				postHandler(w, r)
@@ -185,9 +185,9 @@ func TestVerifyConfigurationWithRetry_EventualSuccess(t *testing.T) {
 			attempts++
 			w.Header().Set("Content-Type", "application/json")
 			if attempts <= 1 {
-				json.NewEncoder(w).Encode(oldConfig)
+				_ = json.NewEncoder(w).Encode(oldConfig)
 			} else {
-				json.NewEncoder(w).Encode(newConfig)
+				_ = json.NewEncoder(w).Encode(newConfig)
 			}
 		}
 	}))

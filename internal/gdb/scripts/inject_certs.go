@@ -80,11 +80,11 @@ func (s *InjectCertsScript) Params() map[string]interface{} {
 			"Error": fmt.Sprintf("failed to create temp cert file: %v", err),
 		}
 	}
-	defer tmpFile.Close()
+	defer func() { _ = tmpFile.Close() }()
 
 	bytesWritten, err := tmpFile.Write(s.certData)
 	if err != nil {
-		os.Remove(tmpFile.Name())
+		_ = os.Remove(tmpFile.Name())
 		return map[string]interface{}{
 			"Error": fmt.Sprintf("failed to write cert data: %v", err),
 		}
@@ -92,7 +92,7 @@ func (s *InjectCertsScript) Params() map[string]interface{} {
 
 	// Verify all bytes were written
 	if bytesWritten != len(s.certData) {
-		os.Remove(tmpFile.Name())
+		_ = os.Remove(tmpFile.Name())
 		return map[string]interface{}{
 			"Error": fmt.Sprintf("incomplete cert write: wrote %d of %d bytes", bytesWritten, len(s.certData)),
 		}
@@ -117,7 +117,7 @@ func (s *InjectCertsScript) Parse(output string) (*Result, error) {
 
 	// Clean up temp file
 	if s.certTempFile != "" {
-		os.Remove(s.certTempFile)
+		_ = os.Remove(s.certTempFile)
 	}
 
 	// Extract step markers

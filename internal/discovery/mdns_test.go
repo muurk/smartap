@@ -235,7 +235,7 @@ func TestSerialPattern(t *testing.T) {
 			matches := serialPattern.FindStringSubmatch(tt.hostname)
 
 			if tt.shouldMatch {
-				if matches == nil || len(matches) < 2 {
+				if len(matches) < 2 {
 					t.Errorf("serialPattern did not match %q", tt.hostname)
 				} else if matches[1] != tt.serial {
 					t.Errorf("serialPattern matched %q with serial %q, want %q", tt.hostname, matches[1], tt.serial)

@@ -429,14 +429,14 @@ func contains(s, substr string) bool {
 func BenchmarkCleanJSONResponse(b *testing.B) {
 	data := []byte(malformedDeviceResponse)
 	for i := 0; i < b.N; i++ {
-		CleanJSONResponse(data)
+		_, _ = CleanJSONResponse(data)
 	}
 }
 
 func BenchmarkParseDeviceConfig(b *testing.B) {
 	data := []byte(malformedDeviceResponse)
 	for i := 0; i < b.N; i++ {
-		ParseDeviceConfig(data)
+		_, _ = ParseDeviceConfig(data)
 	}
 }
 

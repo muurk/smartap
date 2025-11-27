@@ -463,7 +463,7 @@ func runDetectFirmware(cmd *cobra.Command, args []string) error {
 	}
 
 	// Handle < 100% confidence - FAILURE with helpful guidance
-	errorMsg := "Firmware detection incomplete"
+	var errorMsg string
 	if version != "UNKNOWN" && version != "0" && confidence > 0 {
 		errorMsg = fmt.Sprintf("Best match: %s (%d%% confidence, %d/%d signatures)", version, confidence, matches, total)
 	} else {
@@ -663,7 +663,7 @@ The memory region is fixed to the CC3200's RAM layout and cannot be changed.`,
 
 func init() {
 	dumpMemoryCmd.Flags().StringVar(&memOutput, "output", "", "Output file (required)")
-	dumpMemoryCmd.MarkFlagRequired("output")
+	_ = dumpMemoryCmd.MarkFlagRequired("output")
 }
 
 func runDumpMemory(cmd *cobra.Command, args []string) error {
@@ -810,8 +810,8 @@ func init() {
 	readFileCmd.Flags().StringVar(&remoteFile, "remote-file", "", "File path on device (required)")
 	readFileCmd.Flags().StringVar(&readOutput, "output", "", "Output file path (required)")
 	readFileCmd.Flags().IntVar(&maxFileSize, "max-size", 262144, "Max file size to read (default: 256KB, safety limit)")
-	readFileCmd.MarkFlagRequired("remote-file")
-	readFileCmd.MarkFlagRequired("output")
+	_ = readFileCmd.MarkFlagRequired("remote-file")
+	_ = readFileCmd.MarkFlagRequired("output")
 }
 
 func runReadFile(cmd *cobra.Command, args []string) error {

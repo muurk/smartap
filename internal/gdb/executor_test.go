@@ -194,7 +194,7 @@ func TestExecutor_WriteScriptFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("writeScriptFile failed: %v", err)
 	}
-	defer os.Remove(filename)
+	defer func() { _ = os.Remove(filename) }()
 
 	// Check file exists
 	if _, err := os.Stat(filename); os.IsNotExist(err) {

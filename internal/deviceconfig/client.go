@@ -139,7 +139,7 @@ func (c *Client) Ping() error {
 	if err != nil {
 		return NewNetworkError("device unreachable", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		return NewAuthError("authentication failed (check credentials)")
@@ -221,7 +221,7 @@ func (c *Client) getConfigurationAttempt() (*DeviceConfig, error) {
 	if err != nil {
 		return nil, NewNetworkError("GET request failed", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		return nil, NewAuthError("authentication failed (check credentials)")
@@ -309,7 +309,7 @@ func (c *Client) updateConfigurationAttempt(update *ConfigUpdate) error {
 	if err != nil {
 		return NewNetworkError("POST request failed", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		return NewAuthError("authentication failed (check credentials)")

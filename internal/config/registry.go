@@ -198,7 +198,7 @@ func (r *Registry) Save() error {
 	// Atomic rename (this is atomic on all platforms)
 	if err := os.Rename(tmpPath, configPath); err != nil {
 		// Clean up temp file on error
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return fmt.Errorf("failed to save config file: %w", err)
 	}
 

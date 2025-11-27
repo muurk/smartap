@@ -99,7 +99,6 @@ func GetTLSInfo(config *tls.Config) map[string]interface{} {
 		"max_version":     "TLS 1.2",
 		"cipher_suites":   cipherNames,
 		"num_certs":       len(config.Certificates),
-		"prefer_server":   config.PreferServerCipherSuites,
 		"session_tickets": !config.SessionTicketsDisabled,
 	}
 }
